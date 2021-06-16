@@ -4,11 +4,13 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -105,8 +107,6 @@ class MainActivity : AppCompatActivity()   {
         }
     }
 
-
-
     public override fun onResume() {
         super.onResume()  // Always call the superclass method first
         /**
@@ -118,7 +118,6 @@ class MainActivity : AppCompatActivity()   {
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(
-//                    Manifest.permission.ACTIVITY_RECOGNITION
                     Manifest.permission.ACTIVITY_RECOGNITION
                 ),
                 PERMISSION_REQUEST_CODE
@@ -131,10 +130,16 @@ class MainActivity : AppCompatActivity()   {
      * 앱 권한 체크 함수
      */
     private fun checkPermission(): Boolean {
-        val result1 = ContextCompat.checkSelfPermission(
-            applicationContext,
-            Manifest.permission.ACTIVITY_RECOGNITION
-        )
+
+        val result1 = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.ACTIVITY_RECOGNITION
+            )
+        } else {
+            0
+        }
+        Log.e(TAG, "result1 : $result1")
 
         return result1 == 0
     }
