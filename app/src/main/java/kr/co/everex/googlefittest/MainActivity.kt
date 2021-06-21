@@ -7,10 +7,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -23,6 +21,8 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
 
+
+
 class MainActivity : AppCompatActivity()   {
     private lateinit var binding: ActivityMainBinding
     private val TAG = "MainActivity : "
@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity()   {
     // 구글 피트니스 옵션
     private val fitnessOptions = FitnessOptions.builder()
         .addDataType(DataType.TYPE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
+        .addDataType(DataType.TYPE_STEP_COUNT_CADENCE, FitnessOptions.ACCESS_READ)
         .addDataType(DataType.AGGREGATE_STEP_COUNT_DELTA, FitnessOptions.ACCESS_READ)
         .build()
 
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity()   {
         val endSeconds = end.atZone(ZoneId.systemDefault()).toEpochSecond()
         val startSeconds = start.atZone(ZoneId.systemDefault()).toEpochSecond()
 
+        // 데이터 read 요청
         val readRequest = DataReadRequest.Builder()
             .aggregate(DataType.AGGREGATE_STEP_COUNT_DELTA)
             .setTimeRange(startSeconds, endSeconds, TimeUnit.SECONDS)
@@ -86,12 +88,26 @@ class MainActivity : AppCompatActivity()   {
             .readData(readRequest)
             .addOnSuccessListener { response ->
                 // Use response data here
-                Log.e(TAG, "OnSuccess()")
+                Log.e(TAG, "getHistoryClient : OnSuccess()")
             }
-            .addOnFailureListener { e -> Log.d(TAG, "OnFailure()", e) }
+            .addOnFailureListener { e -> Log.d(TAG, "getHistoryClient : OnFailure()", e) }
+        Fitness.getRecordingClient(this, GoogleSignIn.getAccountForExtension(this, fitnessOptions))
+            // This example shows subscribing to a DataType, across all possible data
+            // sources. Alternatively, a specific DataSource can be used.
+            .subscribe(DataType.TYPE_STEP_COUNT_DELTA)
+            .addOnSuccessListener {
+                Log.i(TAG, "getRecordingClient : Successfully subscribed!")
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "getRecordingClient : There was a problem subscribing.", e)
+            }
+
     }
 
 
+    /**
+     * 사용자 Oauth 통해 인증 과정 거친후
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (resultCode) {
@@ -123,6 +139,9 @@ class MainActivity : AppCompatActivity()   {
                 PERMISSION_REQUEST_CODE
             )
         }
+
+//        // 걸음수 표현
+//        binding.textViewStepCount.text =
 
     }
 
